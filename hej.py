@@ -19,9 +19,9 @@ import numpy as np
 import pandas as pd
 import os
 import csv
-import seaborn as sn
-import matplotlib.pyplot as plt
+
 #os.chdir('/Users/andreasaspe/Documents/7. semester/Machine Learning (02450)/02450Toolbox_Python/Data')
+
 
 filename = 'LAozone.data.csv'
 df = pd.read_csv(filename)
@@ -29,8 +29,7 @@ df = pd.read_csv(filename)
 # Pandas returns a dataframe, (df) which could be used for handling the data.
 # We will however convert the dataframe to numpy arrays for this course as 
 # is also described in the table in the exercise
-#raw_data = df.get_values()
-raw_data = df.to_numpy()
+raw_data = df.get_values() 
 
 # Notice that raw_data both contains the information we want to store in an array
 # X (the sepal and petal dimensions) and the information that we wish to store 
@@ -39,7 +38,7 @@ raw_data = df.to_numpy()
 # We start by making the data matrix X by indexing into data.
 # We know that the attributes are stored in the four columns from inspecting 
 # the file.
-cols = range(0, 10) 
+cols = range(0, 9) 
 X = raw_data[:, cols]
 
 # We can extract the attribute names that came from the header of the csv
@@ -69,6 +68,7 @@ for i in range(0,len(classLabels)):
         classLabels_new[i] = "Summer"
     if 244 <= classLabels[i] <= 335:
         classLabels_new[i] = "Fall"
+    
 
 # Then determine which classes are in the data by finding the set of 
 # unique class labels 
@@ -110,59 +110,3 @@ N, M = X.shape
 # Finally, the last variable that we need to have the dataset in the 
 # "standard representation" for the course, is the number of classes, C:
 C = len(classNames)
-
-# ******** OUTLIER REMOVAL ******** #
-
-#We will remove the wind speed with more than 15 mph.
-outlier_mask = X[:,2]>15
-valid_mask = np.logical_not(outlier_mask)
-
-
-# Finally we will remove these from the data set
-X = X[valid_mask,:]
-#Y = Y[valid_mask,:] # Used when standardizing
-y = y[valid_mask]
-N = len(y)
-print(X.shape)
-
-outlier_mask2 = X[:,5]>4800
-valid_mask2 = np.logical_not(outlier_mask2)
-
-X = X[valid_mask2,:]
-#Y = Y[valid_mask,:] # Used when standardizing
-y = y[valid_mask2]
-N = len(y)
-print(X.shape)
-
-# This reveals no further outliers, and we conclude that all outliers have
-# been detected and removed.
-
-# ******** OUTLIER REMOVAL ******** #
-
-# ******** ONE-OUT-OF-K ENCODING ******** #
-
-#Transform data, such that we are able to do one-out-of-K
-#encoding:
-df["Spring"] = 0
-df["Summer"] = 0
-df["Fall"] = 0
-df["Winter"] = 0
-
-
-#Redefine classlabels_new:
-y_new = np.zeros((len(X),4), dtype=int)
-
-#Extract values for the four columns:
-for i in range(0,len(y)):
-    # select indices belonging to class c:
-    if y[i] == 0:
-        y_new[i,2] = 1
-    if y[i] == 1:
-        y_new[i,0] = 1
-    if y[i] == 2:
-        y_new[i,1] = 1
-    if y[i] == 3:
-        y_new[i,3] = 1
-
-
-# ******** ONE-OUT-OF-K ENCODING ******** #
