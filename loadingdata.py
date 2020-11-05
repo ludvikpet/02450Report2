@@ -26,12 +26,6 @@ import matplotlib.pyplot as plt
 filename = 'LAozone.data.csv'
 df = pd.read_csv(filename)
 
-#Add columns for one-out-of-K encoding:
-df["Spring"] = 0
-df["Summer"] = 0
-df["Fall"] = 0
-df["Winter"] = 0
-
 # Pandas returns a dataframe, (df) which could be used for handling the data.
 # We will however convert the dataframe to numpy arrays for this course as 
 # is also described in the table in the exercise
@@ -54,7 +48,7 @@ attributeNames = np.asarray(df.columns[cols])
 # Before we can store the class index, we need to convert the strings that
 # specify the class of a given object to a numerical value. We start by 
 # extracting the strings for each sample from the raw data loaded from the csv:
-classLabels = raw_data[:,-5] # -1 takes the last column
+classLabels = raw_data[:,-1] # -1 takes the last column
 
 
 #ASSIGNING CLASSES
@@ -75,7 +69,6 @@ for i in range(0,len(classLabels)):
         classLabels_new[i] = "Summer"
     if 244 <= classLabels[i] <= 335:
         classLabels_new[i] = "Fall"
-    
 
 # Then determine which classes are in the data by finding the set of 
 # unique class labels 
@@ -118,7 +111,6 @@ N, M = X.shape
 # "standard representation" for the course, is the number of classes, C:
 C = len(classNames)
 
-
 # ******** OUTLIER REMOVAL ******** #
 
 #We will remove the wind speed with more than 15 mph.
@@ -146,3 +138,31 @@ print(X.shape)
 # been detected and removed.
 
 # ******** OUTLIER REMOVAL ******** #
+
+# ******** ONE-OUT-OF-K ENCODING ******** #
+
+#Transform data, such that we are able to do one-out-of-K
+#encoding:
+df["Spring"] = 0
+df["Summer"] = 0
+df["Fall"] = 0
+df["Winter"] = 0
+
+
+#Redefine classlabels_new:
+y_new = np.zeros((len(X),4), dtype=int)
+
+#Extract values for the four columns:
+for i in range(0,len(y)):
+    # select indices belonging to class c:
+    if y[i] == 0:
+        y_new[i,2] = 1
+    if y[i] == 1:
+        y_new[i,0] = 1
+    if y[i] == 2:
+        y_new[i,1] = 1
+    if y[i] == 3:
+        y_new[i,3] = 1
+
+
+# ******** ONE-OUT-OF-K ENCODING ******** #
