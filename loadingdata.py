@@ -123,7 +123,7 @@ X = X[valid_mask,:]
 #Y = Y[valid_mask,:] # Used when standardizing
 y = y[valid_mask]
 N = len(y)
-print(X.shape)
+
 
 outlier_mask2 = X[:,5]>4800
 valid_mask2 = np.logical_not(outlier_mask2)
@@ -132,7 +132,7 @@ X = X[valid_mask2,:]
 #Y = Y[valid_mask,:] # Used when standardizing
 y = y[valid_mask2]
 N = len(y)
-print(X.shape)
+
 
 # This reveals no further outliers, and we conclude that all outliers have
 # been detected and removed.
@@ -155,13 +155,13 @@ y_new = np.zeros((len(X),4), dtype=int)
 #Extract values for the four columns:
 for i in range(0,len(y)):
     # select indices belonging to class c:
-    if y[i] == 0:
+    if y[i] == 0:   #Fall
         y_new[i,2] = 1
-    if y[i] == 1:
+    if y[i] == 1:   #Spring 
         y_new[i,0] = 1
-    if y[i] == 2:
+    if y[i] == 2:   #Summer
         y_new[i,1] = 1
-    if y[i] == 3:
+    if y[i] == 3:   #Winter
         y_new[i,3] = 1
 
 
