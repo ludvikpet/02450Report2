@@ -9,7 +9,7 @@ import numpy as np
 
 # Load Matlab data file and extract variables of interest
 
-X = standarize()
+X = standarize(X)
 
 # Tree complexity parameter - constraint on maximum depth
 tc = np.arange(1, 21, 1)    #tc = np.arange(2, 21, 1)
