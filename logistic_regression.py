@@ -6,6 +6,8 @@ Created on Wed Nov 11 11:05:34 2020
 @author: andreasaspe
 """
 
+#Inspired by # exercise 6.3.2, exercise 8.3.3 and exercise 8.1.1
+
 from loadingdata import *
 from standarize import *
 import matplotlib.pyplot as plt
