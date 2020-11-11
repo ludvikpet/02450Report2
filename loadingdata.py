@@ -39,7 +39,7 @@ raw_data = df.to_numpy()
 # We start by making the data matrix X by indexing into data.
 # We know that the attributes are stored in the four columns from inspecting 
 # the file.
-cols = range(0, 10) 
+cols = range(0, 9) 
 X = raw_data[:, cols]
 
 # We can extract the attribute names that came from the header of the csv
@@ -58,6 +58,9 @@ classLabels = raw_data[:,-1] # -1 takes the last column
 #Interval dage: 244:335 er september-november. Dvs. i python domain er dette 243:334
 #Intercal dage: 335-365 er december
 
+'''
+# ******** MULTI CLASS SETUP ******** #
+
 classLabels_new = ['']*len(classLabels)
 for i in range(0,len(classLabels)):
     # select indices belonging to class c:
@@ -69,6 +72,21 @@ for i in range(0,len(classLabels)):
         classLabels_new[i] = "Summer"
     if 244 <= classLabels[i] <= 335:
         classLabels_new[i] = "Fall"
+
+# ******** MULTI CLASS SETUP ******** #
+'''
+
+# ******** BINARY CLASS SETUP ******** #
+
+classLabels_new = ['']*len(classLabels)
+for i in range(0,len(classLabels)):
+    # select indices belonging to class c:
+    if (80 <= classLabels[i] < 264):
+        classLabels_new[i] = "21st of March - 20th of September"
+    else:
+        classLabels_new[i] = "21st of September - 20th of March"
+
+# ******** BINARY CLASS SETUP ******** #
 
 # Then determine which classes are in the data by finding the set of 
 # unique class labels 
@@ -111,6 +129,8 @@ N, M = X.shape
 # "standard representation" for the course, is the number of classes, C:
 C = len(classNames)
 
+#Remove the comment below to remove outliers:
+'''
 # ******** OUTLIER REMOVAL ******** #
 
 #We will remove the wind speed with more than 15 mph.
@@ -138,7 +158,10 @@ N = len(y)
 # been detected and removed.
 
 # ******** OUTLIER REMOVAL ******** #
+'''
 
+#Remove the comment below to allow for one-out-of-K encoding:
+'''
 # ******** ONE-OUT-OF-K ENCODING ******** #
 
 #Transform data, such that we are able to do one-out-of-K
@@ -166,3 +189,4 @@ for i in range(0,len(y)):
 
 
 # ******** ONE-OUT-OF-K ENCODING ******** #
+'''
