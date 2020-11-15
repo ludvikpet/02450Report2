@@ -54,14 +54,13 @@ n_hidden_units = 7      # number of hidden units
 n_replicates = 1        # number of networks trained in each k-fold
 max_iter = 2000
 
-# Setup figure for display of learning curves and error rates in fold
-summaries, summaries_axes = plt.subplots(1,2, figsize=(10,5))
 # Make a list for storing assigned color of learning curve for up to K=10
 color_list = ['tab:orange', 'tab:green', 'tab:purple', 'tab:brown', 'tab:pink',
               'tab:gray', 'tab:olive', 'tab:cyan', 'tab:red', 'tab:blue']
 
 errors = [] # make a list for storing generalizaition error in each loop
 hidden_unit_used = [] #Chosen hidden unit
+learning_curve_list = []
 
 print(attributeNames)
 M = M+1
@@ -90,7 +89,8 @@ k=0
 k_int = 0
 
 #Outer fold:
-for train_index, test_index in CV.split(X,y):
+for (k1,(train_index, test_index)) in enumerate(CV.split(X,y)):
+    print('\nCrossvalidation fold: {0}/{1}'.format(k+1,K))
     
     # extract training and test set for current CV fold:
     X_train = X[train_index]
@@ -119,7 +119,7 @@ for train_index, test_index in CV.split(X,y):
     errors_int = [] # make a list for storing generalizaition error in each loop
     
     #Internal fold:
-    for train_index1, test_index1 in CV2.split(X_train,y_train):
+    for (k_int,(train_index1, test_index1)) in enumerate(CV2.split(X_train,y_train)):
         
         #Define training sets:
         X_train2 = X_train[train_index1]
@@ -180,7 +180,7 @@ for train_index, test_index in CV.split(X,y):
             y_test_est_int = net_int(X_test_int)
             
             # Determine errors and errors
-            se_int = (y_test_est_int.float()-y_test_int.float())**2 # squared error
+            se_int = (y_test_est_int[:,0].float()-y_test_int.float())**2 # squared error
             mse_int = (sum(se_int).type(torch.float)/len(y_test_int)).data.numpy() #mean
             errors_int.append(mse_int) # store error rate for current CV fold 
         
@@ -232,17 +232,12 @@ for train_index, test_index in CV.split(X,y):
     y_test_est = net(X_test_out)
     
     # Determine errors and errors
-    se = (y_test_est.float()-y_test_out.float())**2 # squared error
+    se = (y_test_est[:,0].float()-y_test_out.float())**2 # squared error
     mse = (sum(se).type(torch.float)/len(y_test_out)).data.numpy() #mean
     errors.append(mse) # store error rate for current CV fold 
-
-    # Display the learning curve for the best net in the current fold
-    h, = summaries_axes[0].plot(learning_curve, color=color_list[k])
-    h.set_label('CV fold {0}'.format(k+1))
-    summaries_axes[0].set_xlabel('Iterations')
-    summaries_axes[0].set_xlim((0, max_iter))
-    summaries_axes[0].set_ylabel('Loss')
-    summaries_axes[0].set_title('Learning curves')
+    
+    #Add learning curve to list:
+    learning_curve_list.append(learning_curve)
     
     #REGULARIZED LINEAR REGRESSION:
     
@@ -343,14 +338,25 @@ for m in range(M):
 
 #First, set y to shape: (x, 1):
 #y=X[:,[0]] # puts the y values equal to ozone
-    
+
+# Setup figure for display of learning curves and error rates in fold
+summaries, summaries_axes = plt.subplots(1,2, figsize=(10,5))
+
+# Display the learning curve for the best net in the current fold
+for (k,l) in enumerate(learning_curve_list):
+    h, = summaries_axes[0].plot(l, color=color_list[k])
+    h.set_label('CV fold {0}'.format(k+1))
+    summaries_axes[0].set_xlabel('Iterations')
+    summaries_axes[0].set_xlim((0, max_iter))
+    summaries_axes[0].set_ylabel('Loss')
+    summaries_axes[0].set_title('Learning curves')
+
 # Display the MSE across folds
 summaries_axes[1].bar(np.arange(1, K+1), np.squeeze(np.asarray(errors)), color=color_list)
 summaries_axes[1].set_xlabel('Fold')
 summaries_axes[1].set_xticks(np.arange(1, K+1))
 summaries_axes[1].set_ylabel('MSE')
 summaries_axes[1].set_title('Test mean-squared-error')
-
 
 print('Diagram of best neural net in last fold:')
 weights = [net[i].weight.data.numpy().T for i in [0,2]]
@@ -371,9 +377,9 @@ print(errors)
 # points are below the y=x line, then the model underestimates the value
 plt.figure(figsize=(10,10))
 y_est = y_test_est.data.numpy(); y_true = y_test_out.data.numpy()
-axis_range = [np.min([y_est, y_true])-1,np.max([y_est, y_true])+1]
+axis_range = [np.min([y_est[:,0], y_true])-1,np.max([y_est[:,0], y_true])+1]
 plt.plot(axis_range,axis_range,'k--')
-plt.plot(y_true, y_est,'ob',alpha=.25)
+plt.plot(y_true, y_est[:,0],'ob',alpha=.25)
 plt.legend(['Perfect estimation','Model estimations'])
 plt.title('Ozone concentration: estimated versus true value (for last CV-fold)')
 plt.ylim(axis_range); plt.xlim(axis_range)
@@ -420,10 +426,10 @@ if do_pca_preprocessing:
 # Parameters for neural network classifier
 n_hidden_units = 7      # number of hidden units
 n_replicates = 1        # number of networks trained in each k-fold
-max_iter = 10000
+max_iter = 2000
 
 # K-fold crossvalidation
-K = 10                  # only three folds to speed up this example
+K = 2              # only three folds to speed up this example
 CV = model_selection.KFold(K, shuffle=True)
 
 # Setup figure for display of learning curves and error rates in fold
