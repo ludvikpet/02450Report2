@@ -130,7 +130,7 @@ N, M = X.shape
 C = len(classNames)
 
 #Remove the comment below to remove outliers:
-'''
+
 # ******** OUTLIER REMOVAL ******** #
 
 #We will remove the wind speed with more than 15 mph.
@@ -158,10 +158,10 @@ N = len(y)
 # been detected and removed.
 
 # ******** OUTLIER REMOVAL ******** #
-'''
+
 
 #Remove the comment below to allow for one-out-of-K encoding:
-
+'''
 # ******** ONE-OUT-OF-K ENCODING ******** #
 
 #Transform data, such that we are able to do one-out-of-K
@@ -189,3 +189,4 @@ for i in range(0,len(y)):
 
 
 # ******** ONE-OUT-OF-K ENCODING ******** #
+'''

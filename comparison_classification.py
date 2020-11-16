@@ -6,8 +6,8 @@ Created on Sun Nov 15 20:53:41 2020
 @author: andreasaspe
 """
 
+from toolbox_02450 import mcnemar
 from loadingdata import *
-from standarize import *
 import matplotlib.pyplot as plt
 from scipy.io import loadmat
 import numpy as np
@@ -154,8 +154,35 @@ for train_index, test_index in CV1.split(X, y):
     
     index_outer += 1
 
+#Printing values:
+print("\n\n\nData for classification tree:")
+for i in range(K1):
+    print('x_{0}: {1} and Error = {2}'.format(i+1,opt_tc_classificationtree[i],round(error_outer_fold_classificationtree[i],2)))
+print("\n\n\nData for logistic regression:")
+for i in range(K1):
+    print('lambda_{0}: {1} and Error = {2}'.format(i+1,opt_lambda_logistic[i],round(error_outer_fold_logistic[i],2)))
+print("\n\n\nBaseline:")
+for i in range(K1):
+    print('Error = {0}'.format(round(error_outer_fold_baseline[i],2)))
+    
 #Getting the right format for statistical testing
 yhat_log = np.reshape(yhat_log,-1)
 yhat_clas = np.reshape(yhat_clas,-1)
 yhat_baseline = np.reshape(yhat_baseline,-1)
 y_true = np.reshape(y_true,-1)
+
+yhat_log=np.concatenate(yhat_log)
+yhat_clas=np.concatenate(yhat_clas)
+yhat_baseline=np.concatenate(yhat_baseline)
+y_true=np.concatenate(y_true)
+
+alpha=0.05
+print("")
+print("Logistic vs clas")
+[thetahat_logclas, CI_logclas, p_logclas] = mcnemar(y_true, yhat_log, yhat_clas, alpha=alpha)
+print("")
+print("Baseline vs Logistic")
+[thetahat_logbase, CI_logbase, p_logbase] = mcnemar(y_true, yhat_log, yhat_baseline, alpha=alpha)
+print("")
+print("Clas vs Baseline")
+[thetahat_clasbase, CI_clasbase, p_clasbase] = mcnemar(y_true, yhat_clas, yhat_baseline, alpha=alpha)
