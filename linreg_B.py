@@ -8,7 +8,7 @@ Created on Tue Nov 10 10:26:15 2020
 #Linear regression, part b)
 from matplotlib.pylab import (figure, semilogx, loglog, xlabel, ylabel, legend, 
                            title, subplot, show, grid, plot)
-import numpy as np
+import numpy as np, scipy.stats as st
 from scipy.io import loadmat
 import sklearn.linear_model as lm
 from sklearn import model_selection, tree
@@ -25,10 +25,12 @@ import torch
 meanX = X.mean(axis = 0)
 stdX = X.std(ddof=1,axis=0)
 y=X[:,0] # puts the y values equal to ozone
-X = X - np.ones((N,1))*meanX
-X = X/stdX
+#X = X - np.ones((N,1))*meanX
+#X = X/stdX
 X = np.hstack((X[:,1:],y_new))  #cut out the ozone and day
                                 #and combine it with 
+                                
+X = stats.zscore(X) # Normalize data
 N, M = X.shape
 
 C = 4 #Amount of classes
@@ -50,7 +52,7 @@ attributeNames = [u'Offset']+attributeNames[1:9].tolist()+['Spring','Summer','Fa
 
 #ANN VALUES:
 # Parameters for neural network classifier
-n_hidden_units = 7      # number of hidden units
+n_hidden_units = 8      # number of hidden units
 n_replicates = 1        # number of networks trained in each k-fold
 max_iter = 2000
 
@@ -84,9 +86,12 @@ w_rlr = np.empty((M,K))
 mu = np.empty((K, M-1))
 sigma = np.empty((K, M-1))
 w_noreg = np.empty((M,K))
-opt_lambda_list = np.empty(())
+opt_lambda_list = []
 k=0
 k_int = 0
+
+#Added variable for rlr, to use for model comparison:
+Error_test_rlr_se = []
 
 #Outer fold:
 for (k1,(train_index, test_index)) in enumerate(CV.split(X,y)):
@@ -116,7 +121,7 @@ for (k1,(train_index, test_index)) in enumerate(CV.split(X,y)):
     f = 0
     y_train = y_train.squeeze()
     #For ANN:
-    errors_int = [] # make a list for storing generalizaition error in each loop
+    errors_int = np.empty((K2,n_hidden_units)) # make a list for storing generalizaition error in each loop
     
     #Internal fold:
     for (k_int,(train_index1, test_index1)) in enumerate(CV2.split(X_train,y_train)):
@@ -136,11 +141,11 @@ for (k1,(train_index, test_index)) in enumerate(CV.split(X,y)):
         #REGULARIZED LINEAR REGRESSION:
         
         # Standardize the training and set based on training set moments
-        mu_int = np.mean(X_train2[:, 1:], 0)
-        sigma_int = np.std(X_train2[:, 1:], 0)
+        #mu_int = np.mean(X_train2[:, 1:], 0)
+        #sigma_int = np.std(X_train2[:, 1:], 0)
         
-        X_train2[:, 1:] = (X_train2[:, 1:] - mu_int) / sigma_int
-        X_test2[:, 1:] = (X_test2[:, 1:] - mu_int) / sigma_int
+        #X_train2[:, 1:] = (X_train2[:, 1:] - mu_int) / sigma_int
+        #X_test2[:, 1:] = (X_test2[:, 1:] - mu_int) / sigma_int
         
         # precompute terms
         Xty_int = X_train2.T @ y_train2
@@ -159,12 +164,12 @@ for (k1,(train_index, test_index)) in enumerate(CV.split(X,y)):
         
         #ARTIFICIAL NEURAL NETWORK:
         errors_h = [] #Errors, that account for number of hidden units
-        for h in range(1, n_hidden_units+1):
+        for h in range(0, n_hidden_units):
             # Define the model
             model_int = lambda: torch.nn.Sequential(
-                                torch.nn.Linear(M2, h), #M features to n_hidden_units
+                                torch.nn.Linear(M2, h+1), #M features to n_hidden_units
                                 torch.nn.Tanh(),   # 1st transfer function,
-                                torch.nn.Linear(h, 1), # n_hidden_units to 1 output neuron
+                                torch.nn.Linear(h+1, 1), # n_hidden_units to 1 output neuron
                                 # no final tranfer function, i.e. "linear output"
                                 )
             loss_fn = torch.nn.MSELoss() # notice how this is now a mean-squared-error loss
@@ -182,10 +187,10 @@ for (k1,(train_index, test_index)) in enumerate(CV.split(X,y)):
             # Determine errors and errors
             se_int = (y_test_est_int[:,0].float()-y_test_int.float())**2 # squared error
             mse_int = (sum(se_int).type(torch.float)/len(y_test_int)).data.numpy() #mean
-            errors_int.append(mse_int) # store error rate for current CV fold 
+            errors_int[k_int,h] = mse_int # store error rate for current CV fold 
         
         #Append errors from errors_int into errors_h:
-        errors_h.append(errors_int)
+        #errors_h.append(errors_int)
         
     #Define cross validation results -> rlr:
     opt_val_err = np.min(np.mean(test_error,axis=0))
@@ -200,19 +205,19 @@ for (k1,(train_index, test_index)) in enumerate(CV.split(X,y)):
     #ARTIFICIAL NEURAL NETWORK:
     
     #Optimal hidden units:
-    n_hidden_units = np.argmin(np.array(errors_int)[0]) + 1
-
-    for j in range(1,len(errors_h)):
-        if np.min(np.array(errors_h)[j-1]) > np.min(np.array(errors_h)[j]):
-            n_hidden_units = np.argmin(np.array(errors_h)[j]) + 1
+    opt_hidden_units = np.argmin(np.array(errors_int[k])) + 1
+    hidden_unit_used.append(opt_hidden_units)
     
-    hidden_unit_used.append(n_hidden_units)
+    #for j in range(1,len(errors_h)):
+     #   if np.min(np.array(errors_h)[j-1]) > np.min(np.array(errors_h)[j]):
+      #      n_hidden_units = np.argmin(np.array(errors_h)) + 1
+    
     
     # Define the model
     model = lambda: torch.nn.Sequential(
-                        torch.nn.Linear(M, n_hidden_units), #M features to n_hidden_units
+                        torch.nn.Linear(M, opt_hidden_units), #M features to n_hidden_units
                         torch.nn.Tanh(),   # 1st transfer function,
-                        torch.nn.Linear(n_hidden_units, 1), # n_hidden_units to 1 output neuron
+                        torch.nn.Linear(opt_hidden_units, 1), # n_hidden_units to 1 output neuron
                         # no final tranfer function, i.e. "linear output"
                         )
     loss_fn = torch.nn.MSELoss() # notice how this is now a mean-squared-error loss
@@ -244,11 +249,11 @@ for (k1,(train_index, test_index)) in enumerate(CV.split(X,y)):
     # Standardize outer fold based on training set, and save the mean and standard
     # deviations since they're part of the model (they would be needed for
     # making new predictions) - for brevity we won't always store these in the scripts
-    mu[k, :] = np.mean(X_train[:, 1:], 0)
-    sigma[k, :] = np.std(X_train[:, 1:], 0)
+    #mu[k, :] = np.mean(X_train[:, 1:], 0)
+    #sigma[k, :] = np.std(X_train[:, 1:], 0)
     
-    X_train[:, 1:] = (X_train[:, 1:] - mu[k, :] ) / sigma[k, :] 
-    X_test[:, 1:] = (X_test[:, 1:] - mu[k, :] ) / sigma[k, :]
+    #X_train[:, 1:] = (X_train[:, 1:] - mu[k, :] ) / sigma[k, :] 
+    #X_test[:, 1:] = (X_test[:, 1:] - mu[k, :] ) / sigma[k, :]
     
     Xty = X_train.T @ y_train
     XtX = X_train.T @ X_train
@@ -266,19 +271,30 @@ for (k1,(train_index, test_index)) in enumerate(CV.split(X,y)):
     # Compute mean squared error with regularization with optimal lambda
     Error_train_rlr[k] = np.square(y_train-X_train @ w_rlr[:,k]).sum(axis=0)/y_train.shape[0]
     Error_test_rlr[k] = np.square(y_test-X_test @ w_rlr[:,k]).sum(axis=0)/y_test.shape[0]
-
+    
+    
     # Estimate weights for unregularized linear regression, on entire training set
     w_noreg[:,k] = np.linalg.solve(XtX,Xty).squeeze()
     # Compute mean squared error without regularization
     Error_train[k] = np.square(y_train-X_train @ w_noreg[:,k]).sum(axis=0)/y_train.shape[0]
     Error_test[k] = np.square(y_test-X_test @ w_noreg[:,k]).sum(axis=0)/y_test.shape[0]
     # OR ALTERNATIVELY: you can use sklearn.linear_model module for linear regression:
-    #m = lm.LinearRegression().fit(X_train, y_train)
+    #m = lm.LinearRegression().fit(X_train, y_train, w_rlr[:,k])
     #Error_train[k] = np.square(y_train-m.predict(X_train)).sum()/y_train.shape[0]
     #Error_test[k] = np.square(y_test-m.predict(X_test)).sum()/y_test.shape[0]
-
+    #y_est_lr = m.predict(X_test)
+    
+    
     # Display the results for the last cross-validation fold
+    # Also, compute the squared error with regularization and with optimal lambda:
     if k == K-1:
+        
+        rlr_se = np.abs(y_test-X_test @ w_rlr[:,k])**2
+        Error_test_rlr_se.append(rlr_se)
+        
+        #m = lm.LinearRegression().fit(X_train, y_train, w_rlr.mean(axis=1))
+        #y_est_lr = m.predict(X_test)
+        
         figure(k, figsize=(12,8))
         subplot(1,2,1)
         semilogx(lambdas,mean_w_vs_lambda.T[:,1:],'.-') # Don't plot the bias term
@@ -388,6 +404,56 @@ plt.ylabel('Estimated value')
 plt.grid()
 
 plt.show()
+
+# When dealing with regression outputs, a simple way of looking at the quality
+# of predictions visually is by plotting the estimated value as a function of 
+# the true/known value - these values should all be along a straight line "y=x", 
+# and if the points are above the line, the model overestimates, whereas if the
+# points are below the y=x line, then the model underestimates the value
+plt.figure(figsize=(10,10))
+y_est = y_test_est.data.numpy(); y_true = y_test_out.data.numpy()
+axis_range = [np.min([y_est[:,0], y_true])-1,np.max([y_est[:,0], y_true])+1]
+plt.plot(axis_range,axis_range,'k--')
+plt.plot(y_true, y_est[:,0],'ob',alpha=.25)
+plt.legend(['Perfect estimation','Model estimations'])
+plt.title('Ozone concentration: estimated versus true value (for last CV-fold)')
+plt.ylim(axis_range); plt.xlim(axis_range)
+plt.xlabel('True value')
+plt.ylabel('Estimated value')
+plt.grid()
+
+plt.show()
+
+
+#Display pairwise comparisons between the models:
+
+# compute z with squared error.
+z_nn = se.data.numpy()                           #ANN
+z_rlr = Error_test_rlr_se[0]                     #rlr
+z_b = np.abs(y_test - y_test.mean()) ** 2        #Baseline
+
+# compute confidence interval of the models:
+alpha = 0.05
+CIA1 = st.t.interval(1-alpha, df=len(z_nn)-1, loc=np.mean(z_nn), scale=st.sem(z_nn))  # Confidence interval for ANN
+CIA2 = st.t.interval(1-alpha, df=len(z_rlr)-1, loc=np.mean(z_rlr), scale=st.sem(z_rlr))  # Confidence interval for rlr
+CIA3 = st.t.interval(1-alpha, df=len(z_b)-1, loc=np.mean(z_b), scale=st.sem(z_b))  # Confidence interval for rlr
+
+# Compute confidence interval of z = zA-zB and p-value of Null hypothesis
+
+#Pairwise comparison between ANN and rlr:
+z1 = z_nn - z_rlr
+CI1 = st.t.interval(1-alpha, len(z1)-1, loc=np.mean(z1), scale=st.sem(z1))  # Confidence interval
+p1 = st.t.cdf( -np.abs( np.mean(z1) )/st.sem(z1), df=len(z1)-1)  # p-value
+
+#Pairwise comparison between ANN and baseline:
+z2 = z_nn - z_b
+CI2 = st.t.interval(1-alpha, len(z2)-1, loc=np.mean(z2), scale=st.sem(z2))  # Confidence interval
+p2 = st.t.cdf( -np.abs( np.mean(z2) )/st.sem(z2), df=len(z2)-1)  # p-value
+
+#Pairwise comparison between rlr and baseline:
+z3 = z_rlr - z_b
+CI3 = st.t.interval(1-alpha, len(z3)-1, loc=np.mean(z3), scale=st.sem(z3))  # Confidence interval
+p3 = st.t.cdf( -np.abs( np.mean(z3) )/st.sem(z3), df=len(z3)-1)  # p-value
 
 # ***** LINEAR REGRESSION ***** #
 
