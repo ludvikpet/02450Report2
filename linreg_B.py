@@ -25,12 +25,11 @@ import torch
 meanX = X.mean(axis = 0)
 stdX = X.std(ddof=1,axis=0)
 y=X[:,0] # puts the y values equal to ozone
-#X = X - np.ones((N,1))*meanX
-#X = X/stdX
+X = X - np.ones((N,1))*meanX
+X = X/stdX
 X = np.hstack((X[:,1:],y_new))  #cut out the ozone and day
                                 #and combine it with 
-                                
-X = stats.zscore(X) # Normalize data
+                                                            
 N, M = X.shape
 
 C = 4 #Amount of classes
@@ -54,7 +53,7 @@ attributeNames = [u'Offset']+attributeNames[1:9].tolist()+['Spring','Summer','Fa
 # Parameters for neural network classifier
 n_hidden_units = 8      # number of hidden units
 n_replicates = 1        # number of networks trained in each k-fold
-max_iter = 2000
+max_iter = 10000
 
 # Make a list for storing assigned color of learning curve for up to K=10
 color_list = ['tab:orange', 'tab:green', 'tab:purple', 'tab:brown', 'tab:pink',
@@ -141,11 +140,11 @@ for (k1,(train_index, test_index)) in enumerate(CV.split(X,y)):
         #REGULARIZED LINEAR REGRESSION:
         
         # Standardize the training and set based on training set moments
-        #mu_int = np.mean(X_train2[:, 1:], 0)
-        #sigma_int = np.std(X_train2[:, 1:], 0)
+        mu_int = np.mean(X_train2[:, 1:], 0)
+        sigma_int = np.std(X_train2[:, 1:], 0)
         
-        #X_train2[:, 1:] = (X_train2[:, 1:] - mu_int) / sigma_int
-        #X_test2[:, 1:] = (X_test2[:, 1:] - mu_int) / sigma_int
+        X_train2[:, 1:] = (X_train2[:, 1:] - mu_int) / sigma_int
+        X_test2[:, 1:] = (X_test2[:, 1:] - mu_int) / sigma_int
         
         # precompute terms
         Xty_int = X_train2.T @ y_train2
@@ -249,11 +248,11 @@ for (k1,(train_index, test_index)) in enumerate(CV.split(X,y)):
     # Standardize outer fold based on training set, and save the mean and standard
     # deviations since they're part of the model (they would be needed for
     # making new predictions) - for brevity we won't always store these in the scripts
-    #mu[k, :] = np.mean(X_train[:, 1:], 0)
-    #sigma[k, :] = np.std(X_train[:, 1:], 0)
+    mu[k, :] = np.mean(X_train[:, 1:], 0)
+    sigma[k, :] = np.std(X_train[:, 1:], 0)
     
-    #X_train[:, 1:] = (X_train[:, 1:] - mu[k, :] ) / sigma[k, :] 
-    #X_test[:, 1:] = (X_test[:, 1:] - mu[k, :] ) / sigma[k, :]
+    X_train[:, 1:] = (X_train[:, 1:] - mu[k, :] ) / sigma[k, :] 
+    X_test[:, 1:] = (X_test[:, 1:] - mu[k, :] ) / sigma[k, :]
     
     Xty = X_train.T @ y_train
     XtX = X_train.T @ X_train
