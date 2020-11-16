@@ -87,7 +87,7 @@ for train_index, test_index in CV1.split(X, y):
         X_train_inner[:, 1:] = (X_train_inner[:, 1:] - mu_inner) / sigma_inner
         X_test_inner[:, 1:] = (X_test_inner[:, 1:] - mu_inner) / sigma_inner
     
-        index = 0
+        #index = 0
         #Logistic regression
         for i in range(np.size(lambda_logistic)):
             mdl = lm.LogisticRegression(solver='lbfgs', multi_class='multinomial',C=1/lambda_logistic[i])
