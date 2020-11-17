@@ -29,8 +29,8 @@ df = pd.read_csv(filename)
 # Pandas returns a dataframe, (df) which could be used for handling the data.
 # We will however convert the dataframe to numpy arrays for this course as 
 # is also described in the table in the exercise
-#raw_data = df.get_values()
-raw_data = df.to_numpy()
+raw_data = df.get_values()
+#raw_data = df.to_numpy()
 
 # Notice that raw_data both contains the information we want to store in an array
 # X (the sepal and petal dimensions) and the information that we wish to store 
@@ -130,7 +130,7 @@ N, M = X.shape
 C = len(classNames)
 
 #Remove the comment below to remove outliers:
-'''
+
 # ******** OUTLIER REMOVAL ******** #
 
 #We will remove the wind speed with more than 15 mph.
@@ -158,7 +158,7 @@ N = len(y)
 # been detected and removed.
 
 # ******** OUTLIER REMOVAL ******** #
-'''
+
 
 #Remove the comment below to allow for one-out-of-K encoding:
 '''

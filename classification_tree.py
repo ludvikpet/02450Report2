@@ -1,7 +1,6 @@
 # exercise 6.1.2
 
 from loadingdata import *
-from standarize import *
 from matplotlib.pyplot import figure, plot, xlabel, ylabel, legend, show, boxplot
 from scipy.io import loadmat
 from sklearn import model_selection, tree
@@ -9,10 +8,12 @@ import numpy as np
 
 # Load Matlab data file and extract variables of interest
 
-X = standarize(X)
+mu = np.mean(X, 0)
+sigma = np.std(X, 0)
+X = (X - mu) / sigma
 
 # Tree complexity parameter - constraint on maximum depth
-tc = np.arange(1, 21, 1)    #tc = np.arange(2, 21, 1)
+tc = np.arange(1, 16, 1)    #tc = np.arange(2, 21, 1)
 
 # K-fold crossvalidation
 K = 10 #Dette ville være leave-one.out: X.shape[0]
@@ -44,6 +45,7 @@ for train_index, test_index in CV.split(X):
 
 min_error = np.min(Error_test.mean(1))
 opt_lambda_idx = np.argmin(Error_test.mean(1))
+opt_lambda = tc[opt_lambda_idx]
     
 f = figure()
 boxplot(Error_test.T)
@@ -61,4 +63,5 @@ legend(['Error_train','Error_test'])
     
 show()
 
-print('Ran Exercise 6.1.2')
+print('Optimal tree depth:')
+print(opt_lambda)

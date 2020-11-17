@@ -9,7 +9,6 @@ Created on Wed Nov 11 11:05:34 2020
 #Inspired by # exercise 6.3.2, exercise 8.3.3 and exercise 8.1.1
 
 from loadingdata import *
-from standarize import *
 import matplotlib.pyplot as plt
 from scipy.io import loadmat
 import numpy as np
@@ -18,8 +17,8 @@ import sklearn.linear_model as lm
 from matplotlib.pylab import (figure, semilogx, loglog, xlabel, ylabel, legend, 
                            title, subplot, show, grid)
 
-K = 20
-lambdas = np.power(10.,range(-20,8))
+K = 10
+lambdas = np.power(2.,range(-4,8))
 
 CV = model_selection.KFold(K, shuffle=True) #CV = model_selection.LeaveOneOut()
 
